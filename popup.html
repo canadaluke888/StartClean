@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Shut Up Settings</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        padding: 12px;
+        min-width: 240px;
+      }
+
+      h1 {
+        font-size: 16px;
+        margin: 0 0 8px;
+      }
+
+      label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+      }
+
+      p {
+        font-size: 12px;
+        margin: 8px 0 0;
+        color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>First-run tab control</h1>
+    <label>
+      <input type="checkbox" id="auto-record" />
+      Auto-record first-run tabs on startup
+    </label>
+    <p id="status" role="status"></p>
+    <p>
+      When enabled, Shut Up captures newly opened tabs right after the browser
+      starts and adds them to your block list automatically.
+    </p>
+    <script src="popup.js"></script>
+  </body>
+</html>
