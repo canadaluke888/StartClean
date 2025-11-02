@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>First-Run Tab Configurator</title>
+    <link rel="stylesheet" href="configurator.css" />
+  </head>
+  <body>
+    <main>
+      <h1>First-Run Tab Configurator</h1>
+      <p class="intro">
+        Review and update the list of first-run tab rules below. Use the form to
+        add additional entries without editing JSON manually.
+      </p>
+
+      <section aria-labelledby="entries-heading" class="entries">
+        <div class="header">
+          <h2 id="entries-heading">Current entries</h2>
+          <button id="refresh-btn" type="button">Reload from file</button>
+        </div>
+        <p class="hint">
+          The configuration from <code>first-run-config.json</code> is parsed and
+          displayed here. New entries are appended in-memory until you export.
+        </p>
+        <div id="entries-list" class="entries-list" role="list"></div>
+      </section>
+
+      <section aria-labelledby="add-heading" class="add-entry">
+        <h2 id="add-heading">Add a new entry</h2>
+        <form id="add-form">
+          <label>
+            Display name
+            <input id="name-input" type="text" required />
+          </label>
+          <label>
+            URL patterns
+            <textarea
+              id="url-patterns-input"
+              placeholder="One per line, supports * wildcards"
+              required
+            ></textarea>
+          </label>
+          <label>
+            Title must include (all)
+            <textarea
+              id="title-all-input"
+              placeholder="One per line; leave blank if not needed"
+            ></textarea>
+          </label>
+          <label>
+            Title should include (any)
+            <textarea
+              id="title-any-input"
+              placeholder="One per line; leave blank if not needed"
+            ></textarea>
+          </label>
+          <button type="submit">Add entry</button>
+        </form>
+      </section>
+
+      <section aria-labelledby="export-heading" class="export">
+        <h2 id="export-heading">Export updated configuration</h2>
+        <p class="hint">
+          Download the merged configuration to place inside your extension
+          package as <code>first-run-config.json</code>.
+        </p>
+        <div class="actions">
+          <button id="download-btn" type="button">Download JSON</button>
+          <button id="copy-btn" type="button">Copy JSON</button>
+        </div>
+        <pre id="json-preview" aria-live="polite"></pre>
+        <output id="status" role="status" aria-live="polite"></output>
+      </section>
+    </main>
+    <script src="configurator.js" type="module"></script>
+  </body>
+</html>
