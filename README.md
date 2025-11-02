@@ -32,28 +32,6 @@ You can provide only the fields you need. For example, use `urlPatterns` alone t
 
 After updating the file, reload the extension in `chrome://extensions` for the new rules to take effect.
 
-### Use the built-in configurator
-
-Shut Up includes an options page that parses `first-run-config.json` and lets you add new entries without hand-editing JSON:
-
-1. Open `chrome://extensions`, locate Shut Up, and click **Details**.
-2. Click **Extension options** to open the configurator.
-3. Review the entries parsed from `first-run-config.json`.
-4. Use the **Add a new entry** form to provide a name, URL patterns, and optional title keywords.
-5. Download or copy the updated JSON and replace the `first-run-config.json` file in your extension package.
-
-You can also hit **Reload from file** to discard unsaved changes and reparse the bundled configuration.
-
-### Auto-recording first-run tabs
-
-You can let Shut Up collect new first-run or update tabs automatically:
-
-1. Click the Shut Up toolbar icon to open the popup.
-2. Enable **Auto-record first-run tabs on startup**.
-3. Restart the browser. During the first two minutes after launch, any new tabs that open automatically will be added to your block list and closed.
-
-Recorded entries are stored alongside your manual configuration and can be reviewed or edited by opening `chrome://extensions/?id=<extension-id>` and clicking **Service worker** > **Inspect** to view the console logs, or by examining the `recordedEntries` key in the extension's local storage.
-
 ## Capturing a first-run tab to block
 
 1. Install or update the extension that opens the unwanted first-run tab.
@@ -63,7 +41,7 @@ Recorded entries are stored alongside your manual configuration and can be revie
 3. Decide whether matching by URL, title, or both is most reliable:
    * Use `urlPatterns` if the URL is stable and predictable. Replace variable parts with `*` wildcards.
    * Use `titleMustInclude` and `titleShouldIncludeAny` when the title text is consistent but the URL changes.
-4. Add or update an entry using the configurator page (or by editing `first-run-config.json` directly), or let the auto-record feature collect it for you after the next browser restart.
+4. Add or update an entry in `first-run-config.json` using the captured values.
 5. Reload the Shut Up extension and repeat the first-run scenario to confirm the tab now closes automatically.
 
 ## Development

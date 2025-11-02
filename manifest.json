@@ -3,7 +3,7 @@
   "name": "shutup",
   "version": "1.0.0",
   "description": "Auto-closes configurable extension first-run or update tabs.",
-  "permissions": ["tabs", "storage"],
+  "permissions": ["tabs"],
   "background": {
     "service_worker": "background.js"
   },
