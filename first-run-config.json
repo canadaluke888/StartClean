@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Adblock Plus",
+    "urlPatterns": [
+      "chrome-extension://cfhdojbkjhnklbpkdaibdccddilifddb/firstRun.html",
+      "chrome-extension://cfhdojbkjhnklbpkdaibdccddilifddb/legacy_firstRun.html",
+      "https://adblockplus.org/redirect*",
+      "https://adblockplus.org/*update*",
+      "https://adblockplus.org/*changelog*"
+    ],
+    "titleMustInclude": ["adblock plus"],
+    "titleShouldIncludeAny": ["updated", "what's new", "first run"]
+  }
+]

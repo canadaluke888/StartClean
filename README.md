@@ -1,0 +1,78 @@
+# Shut Up First-Run Tab Blocker
+
+This Chrome extension automatically closes "first-run" or "update" tabs that some extensions open the first time they run. You can configure which tabs should be closed by editing a JSON file that lists the URL and/or title patterns to match.
+
+## How it works
+
+* `background.js` listens for newly created or updated tabs and compares them against the configured rules.
+* Rules are loaded at runtime from `first-run-config.json` inside the extension package.
+* When a tab's URL matches a configured pattern, or its title satisfies the provided keywords, the tab is closed automatically.
+
+## Configuration
+
+Edit `first-run-config.json` to list every first-run tab you want to close. The file should contain an array of objects with the following shape:
+
+```json
+[
+  {
+    "name": "Descriptive label",
+    "urlPatterns": ["https://example.com/*"],
+    "titleMustInclude": ["required", "keywords"],
+    "titleShouldIncludeAny": ["optional", "keywords"]
+  }
+]
+```
+
+* **name**: Optional description that helps you remember what the rule targets.
+* **urlPatterns**: Wildcard patterns ("*" is supported) checked against tab URLs.
+* **titleMustInclude**: Lower-case strings that all must appear in the tab title before it is closed.
+* **titleShouldIncludeAny**: Lower-case strings where at least one must appear, allowing you to narrow down matches when multiple titles share the required keywords.
+
+You can provide only the fields you need. For example, use `urlPatterns` alone to block a known URL, or rely on the title matching fields when the URL is unpredictable.
+
+After updating the file, reload the extension in `chrome://extensions` for the new rules to take effect.
+
+### Use the built-in configurator
+
+Shut Up includes an options page that parses `first-run-config.json` and lets you add new entries without hand-editing JSON:
+
+1. Open `chrome://extensions`, locate Shut Up, and click **Details**.
+2. Click **Extension options** to open the configurator.
+3. Review the entries parsed from `first-run-config.json`.
+4. Use the **Add a new entry** form to provide a name, URL patterns, and optional title keywords.
+5. Download or copy the updated JSON and replace the `first-run-config.json` file in your extension package.
+
+You can also hit **Reload from file** to discard unsaved changes and reparse the bundled configuration.
+
+### Auto-recording first-run tabs
+
+You can let Shut Up collect new first-run or update tabs automatically:
+
+1. Click the Shut Up toolbar icon to open the popup.
+2. Enable **Auto-record first-run tabs on startup**.
+3. Restart the browser. During the first two minutes after launch, any new tabs that open automatically will be added to your block list and closed.
+
+Recorded entries are stored alongside your manual configuration and can be reviewed or edited by opening `chrome://extensions/?id=<extension-id>` and clicking **Service worker** > **Inspect** to view the console logs, or by examining the `recordedEntries` key in the extension's local storage.
+
+## Capturing a first-run tab to block
+
+1. Install or update the extension that opens the unwanted first-run tab.
+2. When the tab appears, record its URL and title:
+   * Copy the URL from the address bar.
+   * Right-click the tab title and choose **Copy > Copy page title**, or note the text manually.
+3. Decide whether matching by URL, title, or both is most reliable:
+   * Use `urlPatterns` if the URL is stable and predictable. Replace variable parts with `*` wildcards.
+   * Use `titleMustInclude` and `titleShouldIncludeAny` when the title text is consistent but the URL changes.
+4. Add or update an entry using the configurator page (or by editing `first-run-config.json` directly), or let the auto-record feature collect it for you after the next browser restart.
+5. Reload the Shut Up extension and repeat the first-run scenario to confirm the tab now closes automatically.
+
+## Development
+
+This repository contains the Chrome extension source. To test locally:
+
+1. Open `chrome://extensions` in Chrome.
+2. Enable **Developer mode**.
+3. Click **Load unpacked** and select the repository directory.
+4. Trigger a first-run tab to verify that it is closed according to your configuration.
+
+Feel free to extend `first-run-config.json` with more rules as you encounter additional first-run tabs.
