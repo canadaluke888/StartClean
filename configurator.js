@@ -1,3 +1,5 @@
+import packagedEntries from "./first-run-config.json" assert { type: "json" };
+
 const entriesListEl = document.getElementById("entries-list");
 const jsonPreviewEl = document.getElementById("json-preview");
 const statusEl = document.getElementById("status");
@@ -45,15 +47,10 @@ function getCombinedEntries() {
 async function loadEntriesFromFile() {
   let success = false;
   try {
-    const response = await fetch("first-run-config.json", { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error(`Failed to load file: ${response.status}`);
-    }
-    const data = await response.json();
-    if (!Array.isArray(data)) {
+    if (!Array.isArray(packagedEntries)) {
       throw new Error("Configuration JSON must be an array");
     }
-    baseEntries = data.map(normalizeEntry);
+    baseEntries = packagedEntries.map(normalizeEntry);
     success = true;
   } catch (error) {
     console.error("Unable to load first-run configuration", error);

@@ -5,7 +5,8 @@
   "description": "Auto-closes configurable extension first-run or update tabs.",
   "permissions": ["tabs", "storage"],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "options_page": "configurator.html",
   "icons": {
@@ -15,7 +16,13 @@
     "128": "icon-128.png"
   },
   "action": {
-    "default_title": "startclean",
+    "default_title": "StartClean",
     "default_popup": "popup.html"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["privacy.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

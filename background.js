@@ -1,3 +1,5 @@
+import packagedRules from "./first-run-config.json" assert { type: "json" };
+
 // Convert a simple wildcard pattern to regex (supports "*" only)
 function patternToRegex(pattern) {
   const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -5,35 +7,29 @@ function patternToRegex(pattern) {
   return new RegExp(re);
 }
 
-let configPromise;
+function normalizeRulesets(rawEntries = []) {
+  if (!Array.isArray(rawEntries)) {
+    console.warn("First-run configuration is not an array; ignoring");
+    return [];
+  }
+  return rawEntries.map(entry => ({
+    name: entry?.name || "",
+    urlRegexes: Array.isArray(entry?.urlPatterns)
+      ? entry.urlPatterns.map(patternToRegex)
+      : [],
+    titleMustInclude: Array.isArray(entry?.titleMustInclude)
+      ? entry.titleMustInclude.map(s => String(s).toLowerCase())
+      : [],
+    titleShouldIncludeAny: Array.isArray(entry?.titleShouldIncludeAny)
+      ? entry.titleShouldIncludeAny.map(s => String(s).toLowerCase())
+      : []
+  }));
+}
+
+const bundledEntries = normalizeRulesets(packagedRules);
 
 async function loadConfig() {
-  if (!configPromise) {
-    configPromise = fetch(chrome.runtime.getURL("first-run-config.json"))
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`Failed to load config: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(entries => {
-        if (!Array.isArray(entries)) {
-          console.warn("First-run configuration is not an array; ignoring");
-          return [];
-        }
-        return entries.map(entry => ({
-          name: entry.name || "",
-          urlRegexes: (entry.urlPatterns || []).map(patternToRegex),
-          titleMustInclude: (entry.titleMustInclude || []).map(s => s.toLowerCase()),
-          titleShouldIncludeAny: (entry.titleShouldIncludeAny || []).map(s => s.toLowerCase())
-        }));
-      })
-      .catch(error => {
-        console.error("Unable to load first-run configuration", error);
-        return [];
-      });
-  }
-  return configPromise;
+  return bundledEntries;
 }
 
 async function shouldClose(tab = {}) {
