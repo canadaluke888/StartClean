@@ -1,5 +1,3 @@
-import packagedRules from "./first-run-config.json" assert { type: "json" };
-
 // Convert a simple wildcard pattern to regex (supports "*" only)
 function patternToRegex(pattern) {
   const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -26,10 +24,28 @@ function normalizeRulesets(rawEntries = []) {
   }));
 }
 
-const bundledEntries = normalizeRulesets(packagedRules);
+let bundledEntriesPromise;
+
+async function loadBundledEntries() {
+  if (!bundledEntriesPromise) {
+    bundledEntriesPromise = fetch(chrome.runtime.getURL("first-run-config.json"))
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Failed to load first-run configuration (${response.status})`);
+        }
+        return response.json();
+      })
+      .then(normalizeRulesets)
+      .catch(error => {
+        console.error("Unable to read bundled first-run settings", error);
+        return [];
+      });
+  }
+  return bundledEntriesPromise;
+}
 
 async function loadConfig() {
-  return bundledEntries;
+  return loadBundledEntries();
 }
 
 async function shouldClose(tab = {}) {

@@ -1,5 +1,3 @@
-import packagedEntries from "./first-run-config.json" assert { type: "json" };
-
 const entriesListEl = document.getElementById("entries-list");
 const jsonPreviewEl = document.getElementById("json-preview");
 const statusEl = document.getElementById("status");
@@ -18,6 +16,24 @@ const hasChromeStorage =
 
 let baseEntries = [];
 let customEntries = [];
+let packagedEntriesPromise;
+
+async function getPackagedEntries() {
+  if (!packagedEntriesPromise) {
+    packagedEntriesPromise = fetch(chrome.runtime.getURL("first-run-config.json"))
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Failed to load bundled configuration (${response.status})`);
+        }
+        return response.json();
+      })
+      .catch(error => {
+        console.error("Unable to fetch first-run configuration", error);
+        throw new Error("Unable to load bundled configuration");
+      });
+  }
+  return packagedEntriesPromise;
+}
 
 function parseLines(value) {
   if (!value) return [];
@@ -47,6 +63,7 @@ function getCombinedEntries() {
 async function loadEntriesFromFile() {
   let success = false;
   try {
+    const packagedEntries = await getPackagedEntries();
     if (!Array.isArray(packagedEntries)) {
       throw new Error("Configuration JSON must be an array");
     }
