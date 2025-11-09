@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "shutup",
+  "name": "startclean",
   "version": "1.0.0",
   "description": "Auto-closes configurable extension first-run or update tabs.",
   "permissions": ["tabs", "storage"],
@@ -9,13 +9,13 @@
   },
   "options_page": "configurator.html",
   "icons": {
-    "16": "icon16.png",
-    "32": "icon32.png",
-    "48": "icon48.png",
-    "128": "icon128.png"
+    "16": "icon-16.png",
+    "32": "icon-32.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
   },
   "action": {
-    "default_title": "shutup",
+    "default_title": "startclean",
     "default_popup": "popup.html"
   }
 }
