@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "startclean",
+  "name": "StartClean",
   "version": "1.0.0",
   "description": "Auto-closes configurable extension first-run or update tabs.",
   "permissions": ["tabs", "storage"],
