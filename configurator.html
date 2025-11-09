@@ -20,7 +20,13 @@
         </div>
         <p class="hint">
           The configuration from <code>first-run-config.json</code> is parsed and
-          displayed here. New entries are appended in-memory until you export.
+          displayed here. Additional entries are merged on top of the file
+          without modifying it directly.
+        </p>
+        <p class="hint">
+          Entries you add on this page are stored locally via
+          <code>chrome.storage</code>, so they persist between reloads without
+          editing files by hand.
         </p>
         <div id="entries-list" class="entries-list" role="list"></div>
       </section>

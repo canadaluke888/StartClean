@@ -10,9 +10,15 @@ const urlPatternsInput = document.getElementById("url-patterns-input");
 const titleAllInput = document.getElementById("title-all-input");
 const titleAnyInput = document.getElementById("title-any-input");
 
-let entries = [];
+const CUSTOM_STORAGE_KEY = "customEntries";
+const hasChromeStorage =
+  typeof chrome !== "undefined" && !!chrome.storage?.local?.get;
+
+let baseEntries = [];
+let customEntries = [];
 
 function parseLines(value) {
+  if (!value) return [];
   return value
     .split(/\r?\n/)
     .map(line => line.trim())
@@ -32,7 +38,12 @@ function normalizeEntry(entry) {
   };
 }
 
+function getCombinedEntries() {
+  return [...baseEntries, ...customEntries];
+}
+
 async function loadEntriesFromFile() {
+  let success = false;
   try {
     const response = await fetch("first-run-config.json", { cache: "no-store" });
     if (!response.ok) {
@@ -42,20 +53,96 @@ async function loadEntriesFromFile() {
     if (!Array.isArray(data)) {
       throw new Error("Configuration JSON must be an array");
     }
-    entries = data.map(normalizeEntry);
+    baseEntries = data.map(normalizeEntry);
+    success = true;
   } catch (error) {
     console.error("Unable to load first-run configuration", error);
     showStatus(`Unable to load configuration: ${error.message}`, true);
-    entries = [];
+    baseEntries = [];
+  } finally {
+    render();
   }
-  render();
+  return success;
 }
 
-function entryCard(entry) {
+async function loadCustomEntries() {
+  let success = false;
+  try {
+    const stored = await readStoredCustomEntries();
+    customEntries = stored.map(normalizeEntry);
+    success = true;
+  } catch (error) {
+    console.error("Unable to load saved entries", error);
+    customEntries = [];
+    showStatus(`Unable to load saved entries: ${error.message}`, true);
+  } finally {
+    render();
+  }
+  return success;
+}
+
+function readStoredCustomEntries() {
+  if (hasChromeStorage) {
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.get({ [CUSTOM_STORAGE_KEY]: [] }, result => {
+        const lastError = chrome.runtime?.lastError;
+        if (lastError) {
+          reject(new Error(lastError.message));
+          return;
+        }
+        const value = result[CUSTOM_STORAGE_KEY];
+        resolve(Array.isArray(value) ? value : []);
+      });
+    });
+  }
+
+  try {
+    const raw = localStorage.getItem(CUSTOM_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    throw new Error("Unable to read from localStorage");
+  }
+}
+
+function writeStoredCustomEntries(value) {
+  if (hasChromeStorage) {
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.set({ [CUSTOM_STORAGE_KEY]: value }, () => {
+        const lastError = chrome.runtime?.lastError;
+        if (lastError) {
+          reject(new Error(lastError.message));
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  try {
+    localStorage.setItem(CUSTOM_STORAGE_KEY, JSON.stringify(value));
+  } catch (error) {
+    return Promise.reject(new Error("Unable to write to localStorage"));
+  }
+  return Promise.resolve();
+}
+
+function entryCard(entry, options = {}) {
+  const { sourceLabel = "" } = options;
   const wrapper = document.createElement("article");
   wrapper.className = "entry-card";
+
   const header = document.createElement("h3");
   header.textContent = entry.name || "(Unnamed entry)";
+
+  if (sourceLabel) {
+    const source = document.createElement("span");
+    source.className = "entry-source";
+    source.textContent = sourceLabel;
+    header.append(source);
+  }
+
   wrapper.append(header);
 
   const urlList = document.createElement("ul");
@@ -99,25 +186,29 @@ function describeList(values, emptyText) {
 }
 
 function render() {
+  const combined = getCombinedEntries();
   entriesListEl.innerHTML = "";
-  if (!entries.length) {
+  if (!combined.length) {
     const emptyState = document.createElement("p");
-    emptyState.textContent = "No entries loaded.";
+    emptyState.textContent = "No entries loaded yet.";
     entriesListEl.append(emptyState);
   } else {
-    entries.forEach(entry => {
-      entriesListEl.append(entryCard(entry));
-    });
+    baseEntries.forEach(entry => entriesListEl.append(entryCard(entry)));
+    if (customEntries.length) {
+      customEntries.forEach(entry =>
+        entriesListEl.append(entryCard(entry, { sourceLabel: "Saved locally" }))
+      );
+    }
   }
-  jsonPreviewEl.textContent = JSON.stringify(entries, null, 2);
+  jsonPreviewEl.textContent = JSON.stringify(combined, null, 2);
 }
 
 function showStatus(message, isError = false) {
   statusEl.textContent = message;
-  statusEl.style.color = isError ? "#cf222e" : "#1a7f37";
+  statusEl.classList.toggle("error", isError);
 }
 
-formEl.addEventListener("submit", event => {
+formEl.addEventListener("submit", async event => {
   event.preventDefault();
   const name = nameInput.value.trim();
   const urlPatterns = parseLines(urlPatternsInput.value);
@@ -129,27 +220,41 @@ formEl.addEventListener("submit", event => {
     return;
   }
 
-  const newEntry = {
+  const newEntry = normalizeEntry({
     name,
     urlPatterns,
     titleMustInclude,
     titleShouldIncludeAny
-  };
-  entries.push(newEntry);
+  });
+
+  customEntries.push(newEntry);
   render();
-  showStatus(`Added entry “${name}”.`);
-  formEl.reset();
-  nameInput.focus();
+  try {
+    await writeStoredCustomEntries(customEntries);
+    showStatus(`Saved new entry “${name}”.`);
+    formEl.reset();
+    nameInput.focus();
+  } catch (error) {
+    console.error("Unable to persist entry", error);
+    customEntries.pop();
+    render();
+    showStatus("Unable to save entry. Check storage permissions.", true);
+    return;
+  }
 });
 
-refreshBtn.addEventListener("click", () => {
-  loadEntriesFromFile();
-  showStatus("Reloaded configuration from file.");
+refreshBtn.addEventListener("click", async () => {
+  refreshBtn.disabled = true;
+  const ok = await loadEntriesFromFile();
+  if (ok) {
+    showStatus("Reloaded configuration from file.");
+  }
+  refreshBtn.disabled = false;
 });
 
 copyBtn.addEventListener("click", async () => {
   try {
-    await navigator.clipboard.writeText(JSON.stringify(entries, null, 2));
+    await navigator.clipboard.writeText(JSON.stringify(getCombinedEntries(), null, 2));
     showStatus("Copied JSON to clipboard.");
   } catch (error) {
     console.error("Failed to copy JSON", error);
@@ -159,7 +264,7 @@ copyBtn.addEventListener("click", async () => {
 
 downloadBtn.addEventListener("click", () => {
   try {
-    const blob = new Blob([JSON.stringify(entries, null, 2)], {
+    const blob = new Blob([JSON.stringify(getCombinedEntries(), null, 2)], {
       type: "application/json"
     });
     const url = URL.createObjectURL(blob);
@@ -177,4 +282,8 @@ downloadBtn.addEventListener("click", () => {
   }
 });
 
-loadEntriesFromFile();
+async function initConfigurator() {
+  await Promise.all([loadEntriesFromFile(), loadCustomEntries()]);
+}
+
+initConfigurator();
